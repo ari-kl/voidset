@@ -1,4 +1,4 @@
-from typing import List, Self, Dict
+from typing import List, Self, Dict, Optional
 
 class Generic:
     name: str
@@ -18,7 +18,7 @@ class Generic:
         return True
 
     def realize(self) -> 'Term':
-        return Term("EMPTY", [])
+        return Term("_ERROR", [])
 
 class Term:
     struct: str
@@ -54,17 +54,13 @@ class Term:
 
         return type(self)(self.struct, subbed_args)
 
-    def matches(self, inputs: List[Self | Generic]) -> bool:
-        if len(self.args) != len(inputs):
-            return False
-
-        for (generic, real) in zip(self.args, inputs):
-            if isinstance(generic, Term) and isinstance(real, Term):
-                if generic.struct != real.struct:
+    def matches(self, input: Self | Generic) -> bool:
+        if isinstance(input, Term):
+            if self.struct != input.struct:
+                return False
+            for (generic, real) in zip(self.args, input.args):
+                if not generic.matches(real):
                     return False
-                else:
-                    if not generic.matches(real.args):
-                        return False
 
         return True
 
@@ -85,7 +81,7 @@ class Case:
             return False
 
         for (generic, real) in zip(self.inputs, inputs):
-            if not generic.matches(real.args):
+            if not generic.matches(real):
                 return False
 
         return True
@@ -98,11 +94,14 @@ class Transform:
         self.name = name
         self.cases = cases
 
+    def __call__(self, *args: 'Call | Term | Generic') -> 'Call':
+        return Call(self, list(args))
+
     def case(self, case: Case):
         self.cases.append(case)
 
-    def apply(self, terms: List[Term]) -> Term:
-        for case in self.cases:
+    def apply(self, terms: List[Term]) -> Optional[Term]:
+        for (idx, case) in enumerate(self.cases):
             if case.matches(terms):
                 bindings = {}
 
@@ -112,6 +111,8 @@ class Transform:
                 subbed = case.output.sub(bindings)
 
                 return subbed.realize()
+
+        return None
 
 class Call:
     name: Transform
@@ -129,5 +130,5 @@ class Call:
 
         return type(self)(self.name, new_args)
 
-    def realize(self) -> Term:
+    def realize(self) -> Optional[Term]:
         return self.name.apply([arg.realize() for arg in self.args])

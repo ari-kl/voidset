@@ -1,18 +1,6 @@
 from world import *
 
 def main():
-    add = Transform("add", [])
-
-    add.case(Case(
-        [Generic("a"), Term("Z", [])],
-        Generic("a"),
-    ))
-
-    add.case(Case(
-        [Generic("a"), Term("S", [Generic("b")])],
-        Call(add, [Term("S", [Generic("a")]), Generic("b")])
-    ))
-
     Z = Term("Z", [])
     S = lambda A: Term("S", [A])
 
@@ -20,7 +8,45 @@ def main():
     N2 = S(N1)
     N3 = S(N2)
 
-    print(add.apply([N3, N2]))
+    a = Generic("a")
+    b = Generic("b")
+
+    add = Transform("add", [])
+
+    add.case(Case(
+        [a, Z],
+        a,
+    ))
+
+    add.case(Case(
+        [a, S(b)],
+        Call(add, [S(a), b])
+    ))
+
+    mult = Transform("mult", [])
+
+    mult.case(Case(
+        [a, Z],
+        Z
+    ))
+
+    mult.case(Case(
+        [a, S(b)],
+        add(a, mult(a, b))
+    ))
+
+    print(mult.apply([N3, N2]))
+
+    true = Term("T", [])
+    false = Term("F", [])
+
+    bool_or = Transform("or", [
+        Case([a, false], false),
+        Case([false, a], false),
+        Case([true, true], true)
+    ])
+
+    print(bool_or.apply([false, true]))
 
 if __name__ == "__main__":
     main()
