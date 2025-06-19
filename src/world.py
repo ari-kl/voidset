@@ -76,7 +76,7 @@ class Case:
     inputs: List[Term | Generic]
     output: 'Call | Term | Generic'
 
-    def __init__(self, inputs: List[Term | Generic], output: Term) -> None:
+    def __init__(self, inputs: List[Term | Generic], output: 'Call | Term | Generic') -> None:
         self.inputs = inputs
         self.output = output
 
