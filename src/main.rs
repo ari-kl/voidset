@@ -1,6 +1,6 @@
 use crate::{
-    term::{Structure, Term},
-    transform::Transform,
+    term::{Structure, Term, Unit},
+    transform::{Case, Transform},
 };
 
 mod term;
@@ -23,10 +23,22 @@ fn main() {
 
     let savar = Term::new(&s, vec![avar.clone()]);
     let sbvar = Term::new(&s, vec![bvar.clone()]);
-    let vab = Term::new(&v, vec![avar.clone(), bvar.clone()]);
 
-    let add = Transform::new("add".to_string(), vec![savar, sbvar], vab);
+    let add = Transform::new(
+        "add".to_string(),
+        vec![
+            Case::new(vec![avar.clone(), zero.clone()], Unit::Term(avar.clone())),
+            Case::new(
+                vec![savar.clone(), sbvar.clone()],
+                Unit::CallSelf(vec![Term::new(&s, vec![savar.clone()]), bvar.clone()]),
+            ),
+        ],
+    );
+
     let result = add.apply(vec![one.clone(), two.clone()]);
 
-    println!("{}", result)
+    match result {
+        Some(term) => println!("{}", term),
+        None => println!("no output"),
+    }
 }

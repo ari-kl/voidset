@@ -1,4 +1,9 @@
-use std::{collections::HashMap, fmt::Display};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::Display,
+};
+
+use crate::transform::Transform;
 
 pub enum Structure {
     Generic(String),
@@ -19,8 +24,34 @@ impl PartialEq for Structure {
 
 #[derive(Clone)]
 pub struct Term<'a> {
-    strct: &'a Structure,
+    pub strct: &'a Structure,
     args: Vec<Term<'a>>,
+}
+
+#[derive(Clone)]
+pub enum Unit<'a> {
+    Term(Term<'a>),
+    Call(Box<Transform<'a>>, Vec<Term<'a>>),
+    CallSelf(Vec<Term<'a>>),
+}
+
+impl<'a> Unit<'a> {
+    pub fn substitute(&self, iname: &String, real: Term<'a>) -> Unit<'a> {
+        match self {
+            Unit::Term(term) => Unit::Term(term.substitute(iname, real)),
+            Unit::Call(transform, args) => Unit::Call(
+                transform.clone(),
+                args.iter()
+                    .map(|a| a.substitute(iname, real.clone()))
+                    .collect(),
+            ),
+            Unit::CallSelf(args) => Unit::CallSelf(
+                args.iter()
+                    .map(|a| a.substitute(iname, real.clone()))
+                    .collect(),
+            ),
+        }
+    }
 }
 
 impl<'a> Term<'a> {
@@ -56,6 +87,23 @@ impl<'a> Term<'a> {
         }
 
         return map;
+    }
+
+    pub fn unique_generics(&self) -> HashSet<String> {
+        let mut generics = HashSet::new();
+
+        match self.strct {
+            Structure::Generic(name) => {
+                generics.insert(name.clone());
+            }
+            Structure::Defined(_, _) => {
+                for arg in self.args.iter() {
+                    generics.extend(arg.unique_generics());
+                }
+            }
+        }
+
+        return generics;
     }
 
     pub fn substitute(&self, iname: &String, real: Term<'a>) -> Term<'a> {
