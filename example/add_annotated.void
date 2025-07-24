@@ -1,0 +1,13 @@
+def Z // Term("Z", [])
+def S[a] //
+
+let 1 = S[Z] // Term("S", [terms("Z")])
+let 2 = S[1] // Term("S", [terms("1")])
+let 3 = S[2] // Term("S", [terms("2")])
+
+transform add { // Transform("add", [])
+    (a, Z) -> a; // add.case(Case([Generic("a"), terms("Z")], Generic("a"))
+    (a, S[b]) -> add(S[a], b);  // add.case(Case([Generic("a"), Term("S", [Generic("b")])], Call("add", [Term("S", [Generic("a")]), Generic("B")]))
+}
+
+print add(2, 3) // S[S[S[S[S[Z]]]]]

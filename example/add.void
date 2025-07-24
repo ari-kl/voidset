@@ -1,0 +1,13 @@
+def Z
+def S[a]
+
+let 1 = S[Z]
+let 2 = S[1]
+let 3 = S[2]
+
+transform add {
+    (a, Z) -> a;
+    (a, S[b]) -> add(S[a], b);
+}
+
+print add(2, 3)
